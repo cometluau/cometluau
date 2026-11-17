@@ -1,0 +1,35 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paste — Comet Luau</title><link rel="stylesheet" href="/css/comet.css"></head><body>
+<main class="wrap"><div id="view" aria-live="polite"><div class="card muted">Loading…</div></div>
+<details class="card"><summary>Manage this paste</summary>
+<label for="mk">Private management key</label><input id="mk" type="password" autocomplete="off">
+<label for="nt">New title</label><input id="nt" maxlength="100"><label>New Lua source</label><div id="ns"></div>
+<label for="ne">Expiration</label><select id="ne"><option value="">Keep current</option><option>1hr</option><option>1d</option><option>1w</option><option>1m</option><option>1yr</option><option>forever</option></select>
+<div class="row" style="margin-top:14px"><button class="btn" id="save">Save changes</button><button class="btn danger" id="del">Delete paste</button></div></details></main>
+<script type="module">
+import { shell, api, codeBox, copy, toast, confirmDialog, editor, $ } from '/js/app.js';
+shell();
+const ed = editor($('#ns'));
+const id = location.pathname.split('/').filter(Boolean).pop();
+const fmt = (t) => new Date(t * 1000).toLocaleString();
+try {
+  const p = await api('/api/pastes/' + encodeURIComponent(id));
+  document.title = p.title + ' — Comet Luau';
+  $('#view').innerHTML = `<h1 class="gt"></h1><p class="muted" id="d"></p><p class="muted">Created ${fmt(p.created_at)} · ${p.expires_at ? 'Expires ' + fmt(p.expires_at) : 'Never expires'}</p>
+  <div class="row" style="margin:12px 0"><button class="btn" id="cc">Copy code</button><button class="btn ghost" id="cl">Copy loadstring</button><a class="btn ghost" href="/raw/${id}">Raw</a><button class="btn ghost" id="dl">Download .lua</button></div>${codeBox(p.source)}`;
+  $('h1').textContent = p.title; $('#d').textContent = p.description;
+  $('#cc').onclick = (e) => copy(p.source, e.target);
+  $('#cl').onclick = (e) => copy(`loadstring(game:HttpGet("${location.origin}/raw/${id}"))()`, e.target);
+  $('#dl').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([p.source], { type: 'text/plain' })); a.download = id + '.lua'; a.click(); };
+  ed.set(p.source); $('#nt').value = p.title;
+} catch (e) { $('#view').innerHTML = '<div class="card"><h1>Paste unavailable</h1><p class="muted">It may have expired or been removed.</p></div>'; }
+const hdr = () => ({ 'x-manage-key': $('#mk').value.trim() });
+$('#save').onclick = async () => {
+  const body = { title: $('#nt').value, source: ed.get() }; if ($('#ne').value) body.expiry = $('#ne').value;
+  try { await api('/api/pastes/' + id, { method: 'PUT', headers: hdr(), body: JSON.stringify(body) }); toast('Saved'); setTimeout(() => location.reload(), 600); } catch (e) { toast(e.message, true); }
+};
+$('#del').onclick = async () => {
+  if (!(await confirmDialog('Delete this paste permanently?'))) return;
+  try { await api('/api/pastes/' + id, { method: 'DELETE', headers: hdr() }); toast('Deleted'); setTimeout(() => (location.href = '/pastebin'), 700); } catch (e) { toast(e.message, true); }
+};
+</script></body></html>

@@ -1,0 +1,1 @@
+print("Comet Luau loaded")
