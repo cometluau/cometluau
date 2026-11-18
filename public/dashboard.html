@@ -3,22 +3,6 @@
 <link rel="icon" type="image/png" href="/img/favicon.png"><link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
 <meta property="og:title" content="Comet"><meta property="og:description" content="Lua script hosting and pastebin."><meta property="og:image" content="https://cometluau.pages.dev/img/logo-large.jpg"><meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/css/comet.css"></head><body>
-<script src="https://cdn.jsdelivr.net/npm/disable-devtool@latest"></script>
-
-<script>
-    DisableDevtool({
-        disableMenu: true,
-        disableSelect: true,
-        disableCopy: false,
-        disableCut: false,
-        disablePaste: false,
-
-        ondevtoolopen: function(type, next) {
-            window.location.href = "/";
-            next();
-        }
-    });
-</script>
 <main class="wrap">
 <section class="hero"><div><h1 class="gt">Host and share Lua scripts at light speed.</h1>
 <p class="muted" style="max-width:520px">Publish Lua source, get a link that works with loadstring, and manage it with a private key. No account needed.</p>
