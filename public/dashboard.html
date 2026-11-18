@@ -35,7 +35,7 @@
 <script type="module">
 import { shell, api, copy, highlight, $ } from '/js/app.js';
 shell();
-const LS = 'loadstring(game:HttpGet("https://cometluau.pages.dev/main.lua"))()';
+const LS = 'loadstring(game:HttpGet("https://cometluau.pages.dev/main.lua"))();';
 $('#ls').innerHTML = highlight(LS);
 $('#cp').onclick = (e) => copy(LS, e.target);
 try { const s = await api('/api/stats'); $('#stats').innerHTML = [['Total pastes', s.total], ['Active', s.active], ['Expired', s.expired]].map(([k, v]) => `<div class="card stat"><b>${v}</b><span class="muted">${k}</span></div>`).join(''); }
