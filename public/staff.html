@@ -1,0 +1,95 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Comet | Staff</title><link rel="icon" type="image/png" href="/img/favicon.png"><link rel="stylesheet" href="/css/comet.css"></head><body>
+<main class="wrap">
+<section id="login" class="card narrow" hidden><h1 class="gt" style="font-size:2.2rem">Staff access</h1>
+<form id="lf"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" required><p><button class="btn" id="lb">Sign in</button></p></form></section>
+<section id="dash" hidden>
+<div class="row between"><h1 class="gt">Staff dashboard</h1><button class="btn ghost" id="out">Log out</button></div>
+<div class="split">
+<aside class="card"><input id="q" placeholder="Search title or ID" aria-label="Search pastes">
+<label for="fs">Status</label><select id="fs"><option value="">All pastes</option><option value="active">Active</option><option value="taken_down">Taken down</option></select>
+<div id="list" class="list"></div>
+<div class="row between"><button class="btn ghost sm" id="pv">Previous</button><span class="muted" id="pg"></span><button class="btn ghost sm" id="nx">Next</button></div></aside>
+<section class="card"><p id="empty" class="muted">Select a paste to edit it.</p>
+<div id="form" hidden>
+<p class="muted" id="info"></p>
+<label for="title">Title</label><input id="title" maxlength="100">
+<label for="desc">Description</label><input id="desc" maxlength="500">
+<div class="grid"><div><label for="st">Status</label><select id="st"><option value="active">Active</option><option value="taken_down">Taken down</option></select></div>
+<div><label for="ex">Expiration</label><select id="ex"><option value="">Keep current</option><option>1hr</option><option>1d</option><option>1w</option><option>1m</option><option>1yr</option><option>forever</option></select></div></div>
+<label for="rs">Takedown reason (shown to staff only)</label><input id="rs" maxlength="300">
+<label>Lua source</label><div id="src"></div>
+<div class="row" style="margin-top:14px"><button class="btn" id="save">Save changes</button><a class="btn ghost" id="vw" target="_blank" rel="noopener">Open paste</a><a class="btn ghost" id="rw" target="_blank" rel="noopener">Raw</a><button class="btn ghost" id="ck">Copy management key</button><button class="btn danger" id="del">Delete</button></div>
+</div></section></div></section></main>
+<script type="module">
+import { shell, api, copy, toast, confirmDialog, editor, $ } from '/js/app.js';
+shell();
+let token = sessionStorage.getItem('cs') || '', cur = null, key = null, page = 0, total = 0, size = 30, timer;
+const ed = editor($('#src'));
+const fmt = (t) => (t ? new Date(t * 1000).toLocaleString() : 'Never');
+async function s(path, opts = {}) {
+  try { return await api(path, { ...opts, headers: { authorization: 'Bearer ' + token, ...(opts.headers || {}) } }); }
+  catch (e) { if (e.status === 401) out(true); throw e; }
+}
+function out(expired) { token = ''; sessionStorage.removeItem('cs'); show(); if (expired) toast('Session expired', true); }
+function show() { $('#login').hidden = !!token; $('#dash').hidden = !token; if (token) load(); }
+function render(items) {
+  const box = $('#list');
+  box.textContent = '';
+  if (!items.length) { box.innerHTML = '<p class="muted">No pastes found.</p>'; return; }
+  for (const it of items) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'item' + (it.id === cur ? ' on' : ''); b.dataset.id = it.id;
+    const t = document.createElement('b'); t.textContent = it.title;
+    if (it.status === 'taken_down') { const p = document.createElement('span'); p.className = 'pill'; p.textContent = 'taken down'; t.append(p); }
+    const m = document.createElement('small'); m.textContent = it.id + '   ' + (it.size / 1024).toFixed(1) + ' KB   ' + it.views + ' views   ' + fmt(it.created_at);
+    b.append(t, m); b.onclick = () => open(it.id); box.append(b);
+  }
+}
+async function load() {
+  const p = new URLSearchParams({ q: $('#q').value.trim(), status: $('#fs').value, page });
+  try {
+    const r = await s('/api/staff/pastes?' + p);
+    total = r.total; size = r.size; render(r.items);
+    const pages = Math.max(1, Math.ceil(total / size));
+    $('#pg').textContent = 'Page ' + (page + 1) + ' of ' + pages;
+    $('#pv').disabled = page === 0; $('#nx').disabled = page + 1 >= pages;
+  } catch (e) { toast(e.message, true); }
+}
+async function open(id) {
+  try {
+    const p = await s('/api/staff/pastes/' + id);
+    cur = id; key = p.manage_key;
+    $('#empty').hidden = true; $('#form').hidden = false;
+    $('#title').value = p.title; $('#desc').value = p.description; $('#st').value = p.status; $('#rs').value = p.takedown_reason || ''; $('#ex').value = '';
+    ed.set(p.source);
+    $('#info').textContent = 'ID ' + id + '   Created ' + fmt(p.created_at) + '   Expires ' + fmt(p.expires_at) + '   ' + p.views + ' views';
+    $('#vw').href = '/pastebin/' + id; $('#rw').href = '/raw/' + id;
+    document.querySelectorAll('.item').forEach((x) => x.classList.toggle('on', x.dataset.id === id));
+  } catch (e) { toast(e.message, true); }
+}
+$('#lf').onsubmit = async (e) => {
+  e.preventDefault(); $('#lb').disabled = true;
+  try {
+    const r = await api('/api/staff/login', { method: 'POST', body: JSON.stringify({ password: $('#pw').value }) });
+    token = r.token; sessionStorage.setItem('cs', token); $('#pw').value = ''; show();
+  } catch (err) { toast(err.message, true); }
+  $('#lb').disabled = false;
+};
+$('#out').onclick = () => out(false);
+$('#q').oninput = () => { clearTimeout(timer); timer = setTimeout(() => { page = 0; load(); }, 300); };
+$('#fs').onchange = () => { page = 0; load(); };
+$('#pv').onclick = () => { page--; load(); };
+$('#nx').onclick = () => { page++; load(); };
+$('#save').onclick = async () => {
+  const body = { title: $('#title').value, description: $('#desc').value, source: ed.get(), status: $('#st').value, takedown_reason: $('#rs').value };
+  if ($('#ex').value) body.expiry = $('#ex').value;
+  try { await s('/api/staff/pastes/' + cur, { method: 'PUT', body: JSON.stringify(body) }); toast('Saved'); $('#ex').value = ''; load(); } catch (e) { toast(e.message, true); }
+};
+$('#ck').onclick = (e) => (key ? copy(key, e.target) : toast('Management key is unavailable (set the KEY_SECRET secret before creating pastes to keep recoverable keys)', true));
+$('#del').onclick = async () => {
+  if (!(await confirmDialog('Delete this paste permanently?'))) return;
+  try { await s('/api/staff/pastes/' + cur, { method: 'DELETE' }); toast('Deleted'); cur = null; $('#form').hidden = true; $('#empty').hidden = false; load(); } catch (e) { toast(e.message, true); }
+};
+show();
+</script></body></html>

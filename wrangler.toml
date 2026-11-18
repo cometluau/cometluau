@@ -1,0 +1,8 @@
+name = "cometluau"
+pages_build_output_dir = "public"
+compatibility_date = "2026-11-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cometluau"
+database_id = "78275bf0-2e6a-4e96-8d6e-738fbb0d88d1"

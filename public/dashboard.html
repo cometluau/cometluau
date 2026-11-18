@@ -1,0 +1,28 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Comet | Home</title><meta name="theme-color" content="#030917">
+<link rel="icon" type="image/png" href="/img/favicon.png"><link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<meta property="og:title" content="Comet"><meta property="og:description" content="Lua script hosting and pastebin."><meta property="og:image" content="https://cometluau.pages.dev/img/logo-large.jpg"><meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/css/comet.css"></head><body>
+<main class="wrap">
+<section class="hero"><div><h1 class="gt">Host and share Lua scripts at light speed.</h1>
+<p class="muted" style="max-width:520px">Publish Lua source, get a link that works with loadstring, and manage it with a private key. No account needed.</p>
+<div class="row"><a class="btn" href="/scripts">Browse Scripts</a><a class="btn ghost" href="/pastebin">Create Paste</a><a class="btn ghost" href="/raw/main">View main.lua</a></div></div>
+<div class="hero-art"><img src="/img/logo-large.jpg" alt="Comet logo" width="420" height="420"></div></section>
+<section class="card"><h2>Loadstring</h2>
+<div class="loadstring"><code id="ls"></code><button class="btn" id="cp">Copy</button></div></section>
+<div class="grid">
+<section class="card"><h3>Script-only links</h3><p class="muted">Paste links load through loadstring and HttpGet. Opening one in a browser is refused.</p></section>
+<section class="card"><h3>Private key</h3><p class="muted">You get a management key when you publish. Use it to edit or delete the paste.</p></section>
+<section class="card"><h3>Real expiry</h3><p class="muted">Pick how long a paste lives. Expired pastes stop resolving on the server.</p></section>
+</div>
+<h2>Platform statistics</h2><div class="grid" id="stats" aria-live="polite"><div class="card muted">Loading…</div></div>
+</main>
+<script type="module">
+import { shell, api, copy, highlight, $ } from '/js/app.js';
+shell();
+const LS = 'loadstring(game:HttpGet("https://cometluau.pages.dev/main.lua"))()';
+$('#ls').innerHTML = highlight(LS);
+$('#cp').onclick = (e) => copy(LS, e.target);
+try { const s = await api('/api/stats'); $('#stats').innerHTML = [['Total pastes', s.total], ['Active', s.active], ['Expired', s.expired]].map(([k, v]) => `<div class="card stat"><b>${v}</b><span class="muted">${k}</span></div>`).join(''); }
+catch (e) { $('#stats').innerHTML = '<div class="card muted"></div>'; $('#stats .card').textContent = 'Statistics are unavailable: ' + e.message; }
+</script></body></html>
