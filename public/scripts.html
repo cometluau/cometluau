@@ -1,0 +1,49 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Comet | Scripts</title><meta name="theme-color" content="#030917">
+<link rel="icon" type="image/png" href="/img/favicon.png"><link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<meta property="og:title" content="Comet"><meta property="og:description" content="Lua script hosting and pastebin."><meta property="og:image" content="https://cometluau.pages.dev/img/logo-large.jpg"><meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/css/comet.css"></head><body>
+<main class="wrap">
+<h1 class="gt">Scripts</h1>
+<p class="muted">Every script posted on Comet. Search by title, description or ID.</p>
+<div class="searchbar"><input id="q" type="search" placeholder="Search scripts" aria-label="Search scripts" autocomplete="off"><span class="count" id="count" aria-live="polite"></span></div>
+<div id="out" class="scripts" aria-live="polite"></div>
+<p style="text-align:center"><button class="btn ghost" id="more" hidden>Load more</button></p>
+</main>
+<script type="module">
+import { shell, api, copy, $ } from '/js/app.js';
+shell();
+let page = 0, timer, seq = 0, shown = 0;
+const fmt = (t) => new Date(t * 1000).toLocaleDateString();
+function card(s) {
+  const c = document.createElement('article'); c.className = 'card script';
+  const h = document.createElement('h3'); h.textContent = s.title;
+  if (s.pinned) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = 'Official'; h.append(t); }
+  const p = document.createElement('p'); p.className = 'muted'; p.textContent = s.description || 'No description.';
+  const m = document.createElement('div'); m.className = 'meta';
+  m.textContent = s.pinned ? 'main.lua' : [fmt(s.created_at), (s.size / 1024).toFixed(1) + ' KB', s.views + ' loads'].join('   ');
+  const r = document.createElement('div'); r.className = 'row';
+  const cp = document.createElement('button'); cp.className = 'btn sm'; cp.textContent = 'Copy loadstring';
+  const ls = `loadstring(game:HttpGet("${location.origin}/raw/${s.id}"))()`;
+  cp.onclick = (e) => copy(ls, e.target);
+  r.append(cp);
+  const a = document.createElement('a'); a.className = 'btn ghost sm'; a.textContent = 'Details'; a.href = s.pinned ? '/raw/main' : '/pastebin/' + s.id; r.append(a);
+  c.append(h, p, m, r); return c;
+}
+async function load(reset) {
+  const my = ++seq;
+  if (reset) { page = 0; shown = 0; $('#out').textContent = ''; }
+  try {
+    const r = await api('/api/scripts?' + new URLSearchParams({ q: $('#q').value.trim(), page }));
+    if (my !== seq) return;
+    r.items.forEach((s) => $('#out').append(card(s))); shown += r.items.length;
+    const total = r.total + (r.items.some((s) => s.pinned) ? 1 : 0);
+    $('#count').textContent = total + (total === 1 ? ' script' : ' scripts');
+    $('#more').hidden = (page + 1) * r.size >= r.total;
+    if (!shown) $('#out').innerHTML = '<div class="card muted">No scripts found.</div>';
+  } catch (e) { if (my === seq) { $('#out').innerHTML = '<div class="card muted"></div>'; $('#out .card').textContent = e.message; $('#more').hidden = true; } }
+}
+$('#q').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => load(true), 250); });
+$('#more').onclick = () => { page++; load(false); };
+load(true);
+</script></body></html>
