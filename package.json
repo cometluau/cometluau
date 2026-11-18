@@ -1,1 +1,0 @@
-{"name":"cometluau","private":true,"scripts":{"dev":"wrangler pages dev public --d1=DB","migrate:local":"wrangler d1 migrations apply cometluau --local","migrate:remote":"wrangler d1 migrations apply cometluau --remote"},"devDependencies":{"wrangler":"^4"}}
