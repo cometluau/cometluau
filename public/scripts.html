@@ -42,7 +42,7 @@ function card(s) {
   const ls = `loadstring(game:HttpGet("${location.origin}/raw/${s.id}"))()`;
   cp.onclick = (e) => copy(ls, e.target);
   r.append(cp);
-  const a = document.createElement('a'); a.className = 'btn ghost sm'; a.textContent = 'Details'; a.href = s.pinned ? '/raw/main' : '/pastebin/' + s.id; if (s.pinned) { a.target = '_blank'; a.rel = 'noopener'; } r.append(a);
+  const a = document.createElement('a'); a.className = 'btn ghost sm'; a.textContent = 'Details'; a.href = s.pinned ? '/raw/loader.lua' : '/pastebin/' + s.id; if (s.pinned) { a.target = '_blank'; a.rel = 'noopener'; } r.append(a);
   c.append(h, p, m, r); return c;
 }
 async function load(reset) {
