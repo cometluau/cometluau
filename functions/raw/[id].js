@@ -5,8 +5,8 @@ const H = { 'content-type': 'text/plain; charset=utf-8', 'x-content-type-options
 export async function onRequestGet({ request, params, env, waitUntil }) {
   const id = String(params.id).replace(/\.lua$/i, '');
   // The main loader stays public, exactly as before.
-  if (id === 'main') {
-    const r = await env.ASSETS.fetch(new Request(new URL('/main.lua', request.url)));
+  if (id === 'loader') {
+    const r = await env.ASSETS.fetch(new Request(new URL('/loader.lua', request.url)));
     return new Response(r.body, { status: r.status, headers: { ...H, 'access-control-allow-origin': '*' } });
   }
   const bad = await dbReady(env);
