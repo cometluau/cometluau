@@ -2,7 +2,7 @@
 import { json, now, dbReady, LIVE } from '../_lib/util.js';
 
 const SIZE = 24;
-const MAIN = { id: 'main', title: 'Comet main script', description: 'The official Comet loader.', created_at: null, views: null, size: null, visibility: 'public', pinned: true };
+const MAIN = { id: 'main', title: 'Comet Loader', description: 'The official Comet loader.', created_at: null, views: null, size: null, visibility: 'public', pinned: true };
 
 export async function onRequestGet({ request, env }) {
   const bad = await dbReady(env);
