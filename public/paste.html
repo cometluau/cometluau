@@ -1,0 +1,70 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><script>document.documentElement.classList.add('intro')</script><link rel="preload" as="image" href="/img/logo-large.jpg"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Comet | Paste</title><meta name="theme-color" content="#030917">
+<link rel="icon" type="image/png" href="/img/favicon.png"><link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<meta property="og:title" content="Comet"><meta property="og:description" content="Lua script hosting and pastebin."><meta property="og:image" content="https://cometluau.pages.dev/img/logo-large.jpg"><meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/css/comet.css"></head><body>
+
+<script src="/assets/disable-devtool.min.js"></script>
+
+<script>
+    DisableDevtool({
+        disableMenu: true,
+        disableSelect: true,
+        disableInputSelect: false,
+        disableCopy: false,
+        disableCut: false,
+        disablePaste: false,
+        clearLog: true
+    });
+</script>
+  
+<main class="wrap"><div id="view" aria-live="polite"><div class="card muted">Loading…</div></div>
+<details class="card" id="manage"><summary>Manage this paste</summary>
+<label for="mk">Private management key</label><div class="row"><input id="mk" type="password" autocomplete="off" style="flex:1;min-width:200px"><button class="btn ghost" id="unlock" type="button">Unlock</button></div>
+<div id="edit" hidden>
+<label for="nt">Title</label><input id="nt" maxlength="100"><label>Lua source</label><div id="ns"></div>
+<label>Raw link access</label><div id="mvis"></div>
+<label for="ne">Expiration</label><select id="ne"><option value="">Keep current</option><option>1hr</option><option>1d</option><option>1w</option><option>1m</option><option>1yr</option><option>forever</option></select>
+<div class="row" style="margin-top:14px"><button class="btn" id="save">Save changes</button><button class="btn danger" id="del">Delete paste</button></div></div></details></main>
+<script type="module">
+import { shell, api, codeBox, copy, toast, confirmDialog, editor, navigate, seg, segInit, segGet, segSet, $ } from '/js/app.js';
+shell();
+$('#mvis').innerHTML = seg('mvis', 'private'); segInit('mvis', 'private');
+const ed = editor($('#ns'));
+const id = location.pathname.split('/').filter(Boolean).pop();
+const fmt = (t) => new Date(t * 1000).toLocaleString();
+const ls = `loadstring(game:HttpGet("${location.origin}/raw/${id}"))()`;
+let unlocked = false;
+function draw(p) {
+  document.title = 'Comet | ' + p.title;
+  $('#view').innerHTML = `<h1 class="gt"></h1><p class="muted" id="d"></p><p class="muted">Created ${fmt(p.created_at)} · ${p.expires_at ? 'Expires ' + fmt(p.expires_at) : 'Never expires'} · ${(p.size / 1024).toFixed(1)} KB · ${p.views} loads · ${p.visibility === 'public' ? 'Public' : 'Private'}</p>
+  <div class="row" style="margin:12px 0"><button class="btn" id="cl">Copy loadstring</button>${p.visibility === 'public' ? '<a class="btn ghost" href="/raw/' + id + '" target="_blank" rel="noopener">Open raw</a>' : ''}${p.source ? '<button class="btn ghost" id="cc">Copy code</button><button class="btn ghost" id="dl">Download .lua</button>' : ''}</div>
+  <div class="loadstring" id="lsbox"><code></code></div>
+  ${p.source ? codeBox(p.source) : '<p class="muted" style="margin-top:16px">The source is private. It is only delivered to scripts through the loadstring above. Unlock with your management key to view or edit it.</p>'}`;
+  $('h1').textContent = p.title; $('#d').textContent = p.description;
+  $('#lsbox code').textContent = ls;
+  $('#cl').onclick = (e) => copy(ls, e.target);
+  if (p.source) {
+    $('#cc').onclick = (e) => copy(p.source, e.target);
+    $('#dl').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([p.source], { type: 'text/plain' })); a.download = id + '.lua'; a.click(); };
+  }
+}
+try { draw(await api('/api/pastes/' + encodeURIComponent(id))); }
+catch (e) { $('#view').innerHTML = '<div class="card"><h1>Paste unavailable</h1><p class="muted"></p></div>'; $('#view p').textContent = e.status === 404 ? 'It may have expired or been removed.' : e.message; }
+const hdr = () => ({ 'x-manage-key': $('#mk').value.trim() });
+$('#unlock').onclick = async () => {
+  try {
+    const p = await api('/api/pastes/' + encodeURIComponent(id), { headers: hdr() });
+    unlocked = true; ed.set(p.source || ''); segSet('mvis', p.visibility); $('#nt').value = p.title; $('#edit').hidden = false; draw(p); toast('Unlocked');
+  } catch (e) { toast(e.message, true); }
+};
+$('#save').onclick = async () => {
+  if (!unlocked) return toast('Unlock with your management key first.', true);
+  const body = { title: $('#nt').value, source: ed.get(), visibility: segGet('mvis') }; if ($('#ne').value) body.expiry = $('#ne').value;
+  try { await api('/api/pastes/' + id, { method: 'PUT', headers: hdr(), body: JSON.stringify(body) }); toast('Saved'); draw(await api('/api/pastes/' + encodeURIComponent(id), { headers: hdr() })); } catch (e) { toast(e.message, true); }
+};
+$('#del').onclick = async () => {
+  if (!(await confirmDialog('Delete this paste permanently?'))) return;
+  try { await api('/api/pastes/' + id, { method: 'DELETE', headers: hdr() }); toast('Deleted'); setTimeout(() => navigate('/scripts'), 600); } catch (e) { toast(e.message, true); }
+};
+</script></body></html>
