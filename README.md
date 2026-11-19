@@ -12,14 +12,14 @@ Tables are created automatically on first use. `migrations/` is kept for `wrangl
 
 ## Pages
 - `/dashboard` home (tab title `Comet | Home`), `/scripts` search every script, `/pastebin` create a paste, `/pastebin/ID` details, `/staff` staff dashboard.
-- `/main.lua` and `/raw/main`: your own loader, still public. Edit `public/main.lua`.
+- `/loader.lua` and `/raw/loader`: your own loader, still public. Edit `public/loader.lua`.
 
 ## Private or public raw links
 Each script has a **Raw link access** toggle (on the create form, in "Manage this paste", and in /staff). Default is Private.
 - **Private**: `/raw/ID` only answers scripts (HttpGet, request, curl). A browser gets `403` and `-- Access denied. This link only works when loaded by a script.` The public page and search never show the source; the owner unlocks it with the management key.
 - **Public**: anyone can open the raw link and the page shows the source.
 Existing scripts become Private. The database column is added automatically on first use, so there is no migration to run.
-Private keeps casual people out; it cannot stop someone who deliberately fakes headers, because any script that can run your code can also download it. `/main.lua` and `/raw/main` stay public.
+Private keeps casual people out; it cannot stop someone who deliberately fakes headers, because any script that can run your code can also download it. `/loader.lua` and `/raw/loader` stay public.
 
 ## Loading screen, page switching, effects
 - First load: the logo animates in, then glides into the top bar while the page fades in and the music starts. Browsers only allow sound after a click, so if autoplay is blocked the logo screen shows "Click anywhere to enter" and the music starts on that click.

@@ -2,7 +2,7 @@
 import { json, now, dbReady, LIVE } from '../_lib/util.js';
 
 const SIZE = 24;
-const MAIN = { id: 'main', title: 'Comet Loader', description: 'The official Comet loader.', created_at: null, views: null, size: null, visibility: 'public', pinned: true };
+const LOADER = { id: 'loader', title: 'Comet Loader', description: 'The official Comet loader.', created_at: null, views: null, size: null, visibility: 'public', pinned: true };
 
 export async function onRequestGet({ request, env }) {
   const bad = await dbReady(env);
@@ -17,7 +17,7 @@ export async function onRequestGet({ request, env }) {
   const { results } = await env.DB.prepare(
     `SELECT id, title, description, created_at, views, length(source) AS size, CASE WHEN private = 1 THEN 'private' ELSE 'public' END AS visibility FROM pastebins WHERE ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
   ).bind(t, q, q, q, SIZE, page * SIZE).all();
-  const hay = (MAIN.title + ' ' + MAIN.description + ' main').toLowerCase();
-  const items = page === 0 && (!raw || hay.includes(raw.toLowerCase())) ? [MAIN, ...results] : results;
+  const hay = (LOADER.title + ' ' + LOADER.description + ' loader').toLowerCase();
+  const items = page === 0 && (!raw || hay.includes(raw.toLowerCase())) ? [LOADER, ...results] : results;
   return json({ items, total: total.n, size: SIZE });
 }
