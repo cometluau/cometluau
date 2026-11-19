@@ -36,13 +36,13 @@ function card(s) {
   if (s.pinned) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = 'Official'; h.append(t); }
   const p = document.createElement('p'); p.className = 'muted'; p.textContent = s.description || 'No description.';
   const m = document.createElement('div'); m.className = 'meta';
-  m.textContent = s.pinned ? 'main.lua' : [fmt(s.created_at), (s.size / 1024).toFixed(1) + ' KB', s.views + ' loads', s.visibility].join('   ');
+  m.textContent = s.pinned ? 'loader.lua' : [fmt(s.created_at), (s.size / 1024).toFixed(1) + ' KB', s.views + ' loads', s.visibility].join('   ');
   const r = document.createElement('div'); r.className = 'row';
   const cp = document.createElement('button'); cp.className = 'btn sm'; cp.textContent = 'Copy loadstring';
   const ls = `loadstring(game:HttpGet("${location.origin}/raw/${s.id}"))()`;
   cp.onclick = (e) => copy(ls, e.target);
   r.append(cp);
-  const a = document.createElement('a'); a.className = 'btn ghost sm'; a.textContent = 'Details'; a.href = s.pinned ? '/raw/main' : '/pastebin/' + s.id; if (s.pinned) { a.target = '_blank'; a.rel = 'noopener'; } r.append(a);
+  const a = document.createElement('a'); a.className = 'btn ghost sm'; a.textContent = 'Details'; a.href = s.pinned ? '/raw/loader' : '/pastebin/' + s.id; if (s.pinned) { a.target = '_blank'; a.rel = 'noopener'; } r.append(a);
   c.append(h, p, m, r); return c;
 }
 async function load(reset) {
